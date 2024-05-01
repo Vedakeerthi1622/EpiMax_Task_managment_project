@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Todo } from "./Todo";
 import { TodoForm } from "./TodoForm";
 import { v4 as uuidv4 } from "uuid";
@@ -12,6 +12,15 @@ export const TodoWrapper = () => {
   const [rating, setRating] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [filteredTodos, setFilteredTodos] = useState([]);
+
+  useEffect(() => {
+    // Filter todos based on the search term
+    const filtered = todos.filter(todo =>
+      todo.task.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredTodos(filtered);
+  }, [todos, searchTerm]);
 
   const addTodo = (todo) => {
     setTodos([
@@ -55,20 +64,13 @@ export const TodoWrapper = () => {
   };
 
   const submitFeedback = () => {
-    // Handle submitting feedback and rating
-    // For example:
     console.log("Feedback:", feedback);
     console.log("Rating:", rating);
-    // Reset feedback and rating after submission
     setFeedback("");
     setRating(0);
-    setShowFeedback(false); // Hide the feedback section after submission
-    setSubmitted(true); // Mark feedback as submitted
+    setShowFeedback(false);
+    setSubmitted(true);
   };
-
-  const filteredTodos = todos.filter((todo) =>
-    todo.task.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="TodoWrapper">
@@ -84,32 +86,35 @@ export const TodoWrapper = () => {
           />
           <IoIosSearch className="search-icon" /> {/* Search icon */}
         </div>
+        <div>
+          <TodoForm addTodo={addTodo} />
+          {/* Display filtered todos */}
+          {filteredTodos.map((todo) =>
+            todo.isEditing ? (
+              <EditTodoForm key={todo.id} editTodo={editTask} task={todo} />
+            ) : (
+              <Todo
+                key={todo.id}
+                task={todo}
+                deleteTodo={deleteTodo}
+                editTodo={editTodo}
+                toggleComplete={toggleComplete}
+              />
+            )
+          )}
+        </div>
       </div>
-      {submitted && rating < 3 && (
-        <>
-          <p style={{ color: "white", fontWeight: "bold" }}>Thank you for your feedback, we will improve!</p>
-          <button onClick={() => setSubmitted(false)} className="todo-btn">Back</button>
-        </>
+      {submitted && (
+        <div className="feedback-section">
+          <p style={{ color: "white", fontWeight: "bold" }}>
+            Thank you for your feedback
+          </p>
+          <button onClick={() => setSubmitted(false)} className="todo-btn">
+            Back
+          </button>
+        </div>
       )}
-      {submitted && rating >= 3 && (
-        <>
-          <p style={{ color: "white", fontWeight: "bold" }}>Thank you for your feedback!</p>
-          <button onClick={() => setSubmitted(false)} className="todo-btn">Back</button>
-        </>
-      )}
-      {!showFeedback && !submitted && (
-        <TodoForm addTodo={addTodo} />
-      )}
-      {!showFeedback && !submitted && filteredTodos.map((todo) => (
-        <Todo
-          key={todo.id}
-          task={todo}
-          deleteTodo={deleteTodo}
-          editTodo={editTodo}
-          toggleComplete={toggleComplete}
-        />
-      ))}
-      {showFeedback && !submitted && (
+      {!submitted && showFeedback && (
         <div className="feedback-section">
           <h2 style={{ color: "white", fontWeight: "bold" }}>Feedback</h2>
           <textarea
@@ -119,22 +124,30 @@ export const TodoWrapper = () => {
             className="todo-btn"
           />
           <h2 style={{ color: "white", fontWeight: "bold" }}>Rating</h2>
-          <select value={rating} onChange={handleRatingChange} className="todo-btn">
+          <select
+            value={rating}
+            onChange={handleRatingChange}
+            className="todo-btn"
+          >
             <option value={0}>Select rating...</option>
-            <option value={1}>1</option>
-            <option value={2}>2</option>
-            <option value={3}>3</option>
-            <option value={4}>4</option>
-            <option value={5}>5</option>
+            {[1, 2, 3, 4, 5].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
           </select>
-          <button onClick={submitFeedback} className="todo-btn2">Submit Feedback</button>
+          <button onClick={submitFeedback} className="todo-btn2">
+            Submit Feedback
+          </button>
+          <button onClick={() => setShowFeedback(false)} className="todo-btn">
+            Back
+          </button>
         </div>
       )}
-      {showFeedback && !submitted && (
-        <button onClick={() => setShowFeedback(false)} className="todo-btn">Back</button>
-      )}
       {!showFeedback && !submitted && (
-        <button onClick={() => setShowFeedback(true)} className="todo-btn">Feedback</button>
+        <button onClick={() => setShowFeedback(true)} className="todo-btn">
+          Feedback
+        </button>
       )}
     </div>
   );
